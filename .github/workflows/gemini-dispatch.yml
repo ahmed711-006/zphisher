@@ -27,9 +27,8 @@ jobs:
     steps:
       - name: 'Mint identity token'
         id: 'mint_identity_token'
-        if: |-
-          ${{ vars.APP_ID }}
-        uses: 'actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf' # ratchet:actions/create-github-app-token@v2
+        if: ${{ vars.APP_ID != '' }}
+        uses: 'actions/create-github-app-token@v29824e69f54612133e76f7eaac726eef6c875baf' # ratchet:actions/create-github-app-token@v2
         with:
           app-id: '${{ vars.APP_ID }}'
           private-key: '${{ secrets.APP_PRIVATE_KEY }}'
@@ -41,23 +40,23 @@ jobs:
         uses: 'actions/checkout@v4' # ratchet:exclude
 
       - name: 'Run Gemini CLI'
-        id: 'run_gemini'
-        uses: 'google-github-actions/run-gemini-cli@v0' # ratchet:exclude
-        env:
-          TITLE: '${{ github.event.pull_request.title || github.event.issue.title }}'
-          DESCRIPTION: '${{ github.event.pull_request.body || github.event.issue.body }}'
-          EVENT_NAME: '${{ github.event_name }}'
-          GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
-          IS_PULL_REQUEST: '${{ !!github.event.pull_request }}'
-          ISSUE_NUMBER: '${{ github.event.pull_request.number || github.event.issue.number }}'
-          REPOSITORY: '${{ github.repository }}'
-          ADDITIONAL_CONTEXT: '${{ inputs.additional_context }}'
+        id: 'run-gemini'
+        uses: 'google-github-actions/run-gemini-cli@v0'
         with:
+          title: '${{ github.event.pull_request.title || github.event.issue.title }}'
+          description: '${{ github.event.pull_request.body || github.event.issue.body }}'
+          event_name: '${{ github.event_name }}'
+          github_token: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
+          is_pull_request: '${{ !!github.event.pull_request }}'
+          issue_number: '${{ github.event.pull_request.number || github.event.issue.number }}'
+          repository: '${{ github.repository }}'
+          additional_context: '${{ inputs.additional_context }}'
           gcp_location: '${{ vars.GOOGLE_CLOUD_LOCATION }}'
           gcp_project_id: '${{ vars.GOOGLE_CLOUD_PROJECT }}'
           gcp_service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
           gcp_workload_identity_provider: '${{ vars.GCP_WIF_PROVIDER }}'
           gemini_api_key: '${{ secrets.GEMINI_API_KEY }}'
+          gemini_cli_trust_workspace: 'true'
           gemini_cli_version: '${{ vars.GEMINI_CLI_VERSION }}'
           gemini_debug: '${{ fromJSON(vars.GEMINI_DEBUG || vars.ACTIONS_STEP_DEBUG || false) }}'
           gemini_model: '${{ vars.GEMINI_MODEL }}'
@@ -66,8 +65,6 @@ jobs:
           use_vertex_ai: '${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}'
           upload_artifacts: '${{ vars.UPLOAD_ARTIFACTS }}'
           workflow_name: 'gemini-invoke'
-          # Assistant workflows can be triggered by comments on either Issues or PRs.
-          # We explicitly map both fields so the CLI can correctly categorize the interaction.
           github_pr_number: '${{ github.event.pull_request.number }}'
           github_issue_number: '${{ github.event.issue.number }}'
           settings: |-
@@ -105,7 +102,7 @@ jobs:
                     "search_code"
                   ],
                   "env": {
-                    "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+                    "GITHUB_PERSONAL_ACCESS_TOKEN": "${{ GITHUB_TOKEN }}"
                   }
                 }
               },
