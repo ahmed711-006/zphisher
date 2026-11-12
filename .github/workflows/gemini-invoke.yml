@@ -26,16 +26,15 @@ jobs:
       pull-requests: 'write'
     steps:
       - name: 'Mint identity token'
-        id: 'mint_identity_token'
-        if: ${{ vars.APP_ID != '' }}
-        uses: 'actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf' # ratchet:actions/create-github-app-token@v2
-        with:
-          app-id: '${{ vars.APP_ID }}'
-          private-key: '${{ secrets.APP_PRIVATE_KEY }}'
-          permission-contents: 'read'
-          permission-issues: 'write'
-          permission-pull-requests: 'write'
-
+      id: 'mint_identity_token'
+      if: ${{ vars.APP_ID != '' }}
+      uses: 'actions/create-github-app-token@v29824e69f54612133e76f7eaac726eef6c875baf' # ratchet:actions/create-github-app-token@v2
+      with:
+        app-id: '${{ vars.APP_ID }}'
+        private-key: '${{ secrets.APP_PRIVATE_KEY }}'
+        permission-contents: 'read'
+        permission-issues: 'write'
+        permission-pull-requests: 'write'
       - name: 'Checkout Code'
         uses: 'actions/checkout@v4' # ratchet:exclude
 
